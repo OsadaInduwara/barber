@@ -11,12 +11,25 @@ class CallLogService {
     return await Permission.phone.isGranted;
   }
 
-  Future<List<CallLogEntry>> getRecentCalls({int limit = 20}) async {
+  Future<List<CallLogEntry>> getRecentCalls({ int limit = 20 }) async {
     if (!await hasCallLogPermission()) {
       final granted = await requestCallLogPermission();
       if (!granted) return [];
     }
-    final Iterable<CallLogEntry> entries = await CallLog.get(limit: limit);
-    return entries.toList();
+
+    // example: query last 60 days
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final thirtyDaysAgo = DateTime.now()
+        .subtract(Duration(days: 30))
+        .millisecondsSinceEpoch;
+
+    final Iterable<CallLogEntry> filtered = await CallLog.query(
+      dateFrom: thirtyDaysAgo,
+      dateTo: now,
+      // other params: durationFrom, name, number, type...
+    );  // :contentReference[oaicite:1]{index=1}
+
+    return filtered.take(limit).toList();
   }
+
 }
